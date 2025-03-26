@@ -44,3 +44,10 @@ This folder contains commonly used Python utility functions for various tasks li
 |----------|------------|
 | `PlotlyGraphDrawer` | A class for creating and managing interactive graphs using Plotly |
 | `PltGraphDrawer` | A class for creating and managing static graphs using Matplotlib. |
+
+
+### Logging Utilities (`logging_utils.py`)
+
+| Function | Description |
+|----------|------------|
+| `create_console_logger() -> logging.Logger` | Creates and configures a custom logger with a console handler |
