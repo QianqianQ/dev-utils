@@ -1,0 +1,97 @@
+/**
+ * Sample Jenkins pipeline for Python project:
+ * - Uses Python 3.12.4 Alpine container
+ * - Standard build/test/deploy stages
+ * - Includes staging approval
+ * - Handles artifacts and build states
+ */
+
+pipeline {
+    agent { docker { image 'python:3.12.4-alpine3.20' } }
+    environment {
+        DISABLE_AUTH = 'true'
+        DB_ENGINE = 'sqlite'
+    }
+    options {
+        // Timeout counter starts AFTER agent is allocated
+        // timeout(time: 30, unit: 'SECONDS')
+        skipStagesAfterUnstable()
+    }
+    stages {
+        stage('Build') {
+            steps {
+                echo 'Build'
+            }
+        }
+        stage('Test') {
+            // agent any  // stage agent
+            options {
+                // Timeout counter starts BEFORE agent is allocated
+                timeout(time: 10, unit: 'SECONDS')  // stage
+            }
+            steps {
+                sh 'echo "Database engine is ${DB_ENGINE}"'
+                // sh 'printenv'
+                retry(3) {
+                    sh 'python -V'
+                }
+                // timeout(time: 3, unit: 'MINUTES') {
+                //     sh 'python --version'
+                // }
+                timeout(time: 3, unit: "MINUTES") {
+                    retry(3) {
+                        sh 'python -V'
+                    }
+                }
+            }
+        }
+        // Stages as Deployment Environments
+        stage('Deploy - Staging') {
+            steps {
+                // sh './deploy staging'
+                // sh './run-smoke-tests'
+                echo 'Deploy - Staging...'
+            }
+        }
+        stage('Sanity check') {
+            steps {
+                input "Does the staging env ok?"
+            }
+        }
+        stage('Deploy - Production') {
+            steps {
+                echo 'Deploy...'
+                // sh './deploy production'
+                unstable(message: 'Deploy unstable')
+            }
+        }
+        stage('Validate') {
+            steps {
+                echo 'Validate'
+            }
+        }
+    }
+    post {
+        always {
+            // junit 'build/report/**/*.xml'
+            // archiveArtifacts 'build/libs/**/*.jar'
+            archiveArtifacts artifacts: 'build/lib/**/.jar', fingerprint: true
+            echo "Finished"
+        }
+        success {
+            echo 'succeeded!'
+        }
+        unstable {
+            echo 'unstable'
+        }
+        failure {
+            // mail to: 'test@test.com'
+            //      subject: "Faillure"
+            //      body: "Sth wrong with ${env.BUILD_URL}"
+            echo 'failed'
+        }
+        changed {
+            echo 'Things were different before...'
+        }
+    }
+}

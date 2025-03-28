@@ -1,5 +1,7 @@
 # Docker
 
+`sample-web-app` directory demonstrates a sample dockerized web application with Django backend and Angular frontend, using PostgreSQL as database. Includes development setup with live reload and database migration scripts.
+
 ## Installation
 ```bash
 # Update packages
@@ -76,6 +78,11 @@ docker stop $(docker ps -aq)
 ```bash
 # Start containers in detached mode (-d runs them in background)
 docker compose up -d
+
+# Build, (re)create, and start containers in detached mode (-d)
+# --build: Force build images before starting containers
+# --watch: Watch for file changes and update containers automatically
+docker compose up --build --watch
 
 # Open a shell inside a running container using docker-compose
 docker compose exec <container_name> sh

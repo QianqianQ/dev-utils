@@ -1,0 +1,67 @@
+/*
+This Jenkins pipeline defines a CI/CD workflow with three main stages:
+1. Test - Cleans workspace, sets up Python environment, and runs test script
+2. Generate summary - Generates test summary report using Python script
+3. Archive artifacts and publish results - Archives various file types and publishes test results
+
+The pipeline:
+- Runs on any available agent
+- Keeps build records for 180 days
+- Archives multiple file types including logs, reports, and test artifacts
+- Publishes test results using ACI plugin
+*/
+
+pipeline {
+  agent any
+  stages {
+    stage('Test') {
+      steps {
+        cleanWs()
+        sh '''#!/usr/bin/env bash
+            set +x
+            echo
+            echo
+
+            cd "${WORKSPACE}"
+
+            export PYTHONPATH="${PYTHONPATH}:/path/"
+            source /home/user/venv/bin/activate
+
+            archive_path="${JENKINS_HOME}/jobs/${JOB_NAME}/builds/archive/"
+            python3 /path/to/test.py "${arg}"
+        '''
+      }
+    }
+
+    stage('Generate summary') {
+      steps {
+        sh '''#!/usr/bin/env bash
+            set +x
+            echo
+            echo
+
+            cd "${WORKSPACE}"
+
+            export PYTHONPATH="${PYTHONPATH}:/path/"
+            source /home/user/venv/bin/activate
+            python3 /path/to/summary.py
+            '''
+      }
+    }
+
+    stage('Archive artifacts and publish results') {
+        steps {
+            echo 'Archive artifacts and publish results'
+        }
+        post {
+            always {
+                step($class: 'ArtifactArchiver', artifacts: '*.txt, *.json, *.tar, *.yaml, *.gz,*.csv,*.html, *.log, *.xml', followSymlinks: false)
+                step([$class: 'ACIPluginPublisher', name: 'testcase*.xml', shownOnProjectPage: false])
+            }
+    }
+    }
+  }
+  options {
+    buildDiscarder(logRotator(daysToKeepStr: '180'))
+  }
+}
